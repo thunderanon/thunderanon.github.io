@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CORS Test</title>
+</head>
+<body>
+    <h1>CORS Test</h1>
+    <button onclick="sendRequest()">Send Request</button>
+    <div id="result"></div>
+
+    <script>
+        function sendRequest() {
+            fetch('https://perplexity.ai/cdn-cgi/rum', {
+                method: 'OPTIONS',
+                credentials: 'include'
+            })
+            .then(response => {
+                document.getElementById('result').innerHTML = 
+                    `Status: ${response.status}<br>` +
+                    `Headers: ${JSON.stringify(response.headers.get('access-control-allow-origin'))}<br>` +
+                    `Cookies sent: ${document.cookie}`;
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = `Error: ${error}`;
+            });
+        }
+    </script>
+</body>
+</html>
