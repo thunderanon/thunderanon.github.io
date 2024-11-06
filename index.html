@@ -2,29 +2,62 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CORS Test</title>
+    <title>CORS Vulnerability Test</title>
+    <style>
+        .result { margin: 10px; padding: 10px; border: 1px solid #ccc; }
+        .error { color: red; }
+        .success { color: green; }
+    </style>
 </head>
 <body>
-    <h1>CORS Test</h1>
-    <button onclick="sendRequest()">Send Request</button>
-    <div id="result"></div>
+    <h1>CORS Vulnerability Tester</h1>
+    <div>
+        <button onclick="testCORS('OPTIONS')">Test OPTIONS</button>
+        <button onclick="testCORS('POST')">Test POST</button>
+    </div>
+    <div id="result" class="result"></div>
 
     <script>
-        function sendRequest() {
-            fetch('https://perplexity.ai/cdn-cgi/rum', {
-                method: 'OPTIONS',
-                credentials: 'include'
-            })
-            .then(response => {
-                document.getElementById('result').innerHTML = 
-                    `Status: ${response.status}<br>` +
-                    `Headers: ${JSON.stringify(response.headers.get('access-control-allow-origin'))}<br>` +
-                    `Cookies sent: ${document.cookie}`;
-            })
-            .catch(error => {
-                document.getElementById('result').innerHTML = `Error: ${error}`;
-            });
+        async function testCORS(method) {
+            const targetUrl = 'https://perplexity.ai/cdn-cgi/rum';
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                const response = await fetch(targetUrl, {
+                    method: method,
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': '*/*'
+                    },
+                    body: method === 'POST' ? JSON.stringify({
+                        "eventType": 1,
+                        "memory": {
+                            "totalJSHeapSize": 11401845,
+                            "usedJSHeapSize": 7164829
+                        }
+                    }) : null
+                });
+
+                const responseHeaders = {};
+                for (const [key, value] of response.headers) {
+                    responseHeaders[key] = value;
+                }
+
+                resultDiv.innerHTML = `
+                    <h3 class="success">Request Successful</h3>
+                    <p>Status: ${response.status}</p>
+                    <p>Response Headers:</p>
+                    <pre>${JSON.stringify(responseHeaders, null, 2)}</pre>
+                    <p>Cookies Present: ${document.cookie ? 'Yes' : 'No'}</p>
+                    <p>Cookie Values: ${document.cookie || 'None'}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3 class="error">Error</h3>
+                    <p>${error.message}</p>
+                `;
+            }
         }
     </script>
 </body>
