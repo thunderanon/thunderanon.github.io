@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test 2: Special Characters</title>
+</head>
+<body>
+    <h2>Special Characters Test</h2>
+    <div id="output"></div>
+    
+    <script>
+    async function testOrigins() {
+        const targetUrl = 'https://perplexity.ai/cdn-cgi/rum';
+        const origins = [
+            'https://thunderanon.github.io%2fcors-test',
+            'https://thunderanon.github.io%252fcors-test',
+            'https://thunderanon.github.io%2Ecors-test',
+            'https://thunderanon.github.io\x2fcors-test',
+            'https://thunderanon.github.io%00cors-test'
+        ];
+
+        const output = document.getElementById('output');
+        
+        for (let origin of origins) {
+            try {
+                const response = await fetch(targetUrl, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Origin': origin,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        'eventType': 1,
+                        'memory': {
+                            'totalJSHeapSize': 11401845,
+                            'usedJSHeapSize': 7164829
+                        }
+                    })
+                });
+                
+                output.innerHTML += `
+                    <p><strong>Testing Origin:</strong> ${origin}</p>
+                    <p>Status: ${response.status}</p>
+                    <p>Headers: ${[...response.headers]}</p>
+                    <p>Cookies: ${document.cookie}</p>
+                    <hr>
+                `;
+            } catch (error) {
+                output.innerHTML += `
+                    <p><strong>Testing Origin:</strong> ${origin}</p>
+                    <p>Error: ${error.message}</p>
+                    <hr>
+                `;
+            }
+        }
+    }
+    testOrigins();
+    </script>
+    <br>
+    <a href="index.html">Back to Main</a>
+</body>
+</html>
